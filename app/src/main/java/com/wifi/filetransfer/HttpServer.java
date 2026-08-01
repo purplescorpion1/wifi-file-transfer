@@ -181,7 +181,7 @@ public class HttpServer {
             boolean isAuthRequired = PasswordUtils.isPasswordEnabled(context);
             boolean authenticated = false;
 
-            if (isAuthRequired) {
+            if (isAuthRequired && uri.startsWith("/api/") && !uri.equals("/api/auth")) {
                 String authParam = queryParams.get("auth");
                 if (authParam != null) {
                     authenticated = verifySessionToken(authParam);
@@ -194,10 +194,7 @@ public class HttpServer {
                     }
                 }
 
-                // If auth is requested, bypass check here to allow login process
-                if (method.equals("POST") && uri.equals("/api/auth")) {
-                    // Let the POST handler manage authentication
-                } else if (!authenticated) {
+                if (!authenticated) {
                     sendJsonResponse(out, 401, "{\"status\":\"error\",\"message\":\"Unauthorized\"}");
                     return;
                 }

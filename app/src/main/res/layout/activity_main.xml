@@ -143,8 +143,6 @@
                 android:textColor="#37474F"
                 android:textSize="14dp"
                 android:layout_marginBottom="12dp"
-                android:nextFocusUp="@id/btn_stop"
-                android:nextFocusDown="@+id/edit_password"
                 android:focusable="true" />
 
             <TextView
@@ -162,8 +160,24 @@
                 android:hint="Enter password"
                 android:inputType="textPassword"
                 android:textColor="#37474F"
-                android:nextFocusUp="@id/checkbox_password"
-                android:nextFocusDown="@+id/btn_save_settings"
+                android:focusable="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Server Port (Default is 8000):"
+                android:textSize="12sp"
+                android:textColor="#78909C"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="4dp" />
+
+            <EditText
+                android:id="@+id/edit_port"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="8000"
+                android:inputType="number"
+                android:textColor="#37474F"
                 android:focusable="true" />
 
             <Button
@@ -174,7 +188,6 @@
                 android:backgroundTint="#2196F3"
                 android:textColor="#FFFFFF"
                 android:layout_marginTop="12dp"
-                android:nextFocusUp="@id/edit_password"
                 android:focusable="true" />
         </LinearLayout>
 
