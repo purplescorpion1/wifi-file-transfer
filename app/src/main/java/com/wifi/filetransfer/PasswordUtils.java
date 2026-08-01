@@ -2,11 +2,10 @@ package com.wifi.filetransfer;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.UUID;
 
 public class PasswordUtils {
 
@@ -22,7 +21,7 @@ public class PasswordUtils {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             String input = password + salt;
-            byte[] hash = digest.digest(input.getBytes("UTF-8"));
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
             StringBuilder hexString = new StringBuilder();
             for (byte b : hash) {
                 String hex = Integer.toHexString(0xff & b);
@@ -58,18 +57,14 @@ public class PasswordUtils {
         
         editor.putBoolean(KEY_PASSWORD_ENABLED, enabled);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            if (password != null && !password.trim().isEmpty()) {
-                String salt = generateSalt();
-                String hash = hashPassword(password, salt);
-                editor.putString(KEY_PASSWORD_HASH, hash);
-                editor.putString(KEY_PASSWORD_SALT, salt);
-            }
+        if (password != null && !password.trim().isEmpty()) {
+            String salt = generateSalt();
+            String hash = hashPassword(password, salt);
+            editor.putString(KEY_PASSWORD_HASH, hash);
+            editor.putString(KEY_PASSWORD_SALT, salt);
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            editor.apply();
-        }
+        editor.apply();
     }
 
     /**
@@ -85,9 +80,7 @@ public class PasswordUtils {
      */
     public static void setPasswordEnabled(Context context, boolean enabled) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            prefs.edit().putBoolean(KEY_PASSWORD_ENABLED, enabled).apply();
-        }
+        prefs.edit().putBoolean(KEY_PASSWORD_ENABLED, enabled).apply();
     }
 
     /**
@@ -103,9 +96,7 @@ public class PasswordUtils {
         
         if (storedHash == null || storedSalt == null) {
             // Password enabled but no password saved yet. By default, empty password.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-                return inputPassword == null || inputPassword.isEmpty();
-            }
+            return inputPassword == null || inputPassword.isEmpty();
         }
         
         String inputHash = hashPassword(inputPassword, storedSalt);

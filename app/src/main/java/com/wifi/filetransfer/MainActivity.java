@@ -162,11 +162,9 @@ public class MainActivity extends Activity {
         boolean enabled = checkboxPassword.isChecked();
         String password = editPassword.getText().toString().trim();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-            if (enabled && password.isEmpty() && !PasswordUtils.hasSavedPassword(this)) {
-                Toast.makeText(this, "Please enter a password when protection is enabled.", Toast.LENGTH_SHORT).show();
-                return;
-            }
+        if (fenabled && password.isEmpty() && !PasswordUtils.hasSavedPassword(this)) {
+            Toast.makeText(this, "Please enter a password when protection is enabled.", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         PasswordUtils.savePassword(this, password, enabled);

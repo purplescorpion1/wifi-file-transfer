@@ -5,7 +5,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -216,11 +215,9 @@ public class HttpServer {
         private boolean verifySessionToken(String token) {
             android.content.SharedPreferences prefs = context.getSharedPreferences("wifi_transfer_prefs", Context.MODE_PRIVATE);
             String storedHash = prefs.getString("password_hash", "");
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-                if (storedHash.isEmpty()) {
-                    // Password enabled but none set, accept empty password as authenticated
-                    return true;
-                }
+            if (storedHash.isEmpty()) {
+                // Password enabled but none set, accept empty password as authenticated
+                return true;
             }
             String expectedToken = PasswordUtils.hashPassword(storedHash, "session_salt");
             return expectedToken.equals(token);
@@ -333,11 +330,9 @@ public class HttpServer {
         }
 
         private void listDirectory(String path, OutputStream out) throws IOException {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-                if (path == null || path.trim().isEmpty()) {
-                    sendJsonResponse(out, 400, "{\"status\":\"error\",\"message\":\"Missing path\"}");
-                    return;
-                }
+            if (path == null || path.trim().isEmpty()) {
+                sendJsonResponse(out, 400, "{\"status\":\"error\",\"message\":\"Missing path\"}");
+                return;
             }
 
             File dir = new File(path);
@@ -370,11 +365,9 @@ public class HttpServer {
         }
 
         private void downloadFile(String path, OutputStream out) throws IOException {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-                if (path == null || path.trim().isEmpty()) {
-                    sendJsonResponse(out, 400, "{\"status\":\"error\",\"message\":\"Missing path\"}");
-                    return;
-                }
+            if (path == null || path.trim().isEmpty()) {
+                sendJsonResponse(out, 400, "{\"status\":\"error\",\"message\":\"Missing path\"}");
+                return;
             }
 
             File file = new File(path);
@@ -433,11 +426,9 @@ public class HttpServer {
             } else if (uri.equals("/api/create_folder")) {
                 String parentPath = queryParams.get("parent_path");
                 String name = queryParams.get("name");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-                    if (parentPath == null || name == null || name.trim().isEmpty()) {
-                        sendJsonResponse(out, 400, "{\"status\":\"error\",\"message\":\"Missing arguments\"}");
-                        return;
-                    }
+                if (parentPath == null || name == null || name.trim().isEmpty()) {
+                    sendJsonResponse(out, 400, "{\"status\":\"error\",\"message\":\"Missing arguments\"}");
+                    return;
                 }
                 File folder = new File(parentPath, name);
                 if (folder.exists()) {
@@ -450,11 +441,9 @@ public class HttpServer {
             } else if (uri.equals("/api/rename")) {
                 String path = queryParams.get("path");
                 String newName = queryParams.get("new_name");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-                    if (path == null || newName == null || newName.trim().isEmpty()) {
-                        sendJsonResponse(out, 400, "{\"status\":\"error\",\"message\":\"Missing arguments\"}");
-                        return;
-                    }
+                if (path == null || newName == null || newName.trim().isEmpty()) {
+                    sendJsonResponse(out, 400, "{\"status\":\"error\",\"message\":\"Missing arguments\"}");
+                    return;
                 }
                 File src = new File(path);
                 if (!src.exists()) {

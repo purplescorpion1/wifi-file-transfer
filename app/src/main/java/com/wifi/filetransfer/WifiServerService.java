@@ -59,30 +59,20 @@ public class WifiServerService extends Service {
         // Create foreground notification
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(
-                this, 0, notificationIntent, 
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0
+                this, 0, notificationIntent,
+                PendingIntent.FLAG_IMMUTABLE
         );
 
         Notification.Builder builder = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            builder = new Notification.Builder(this, CHANNEL_ID);
-        } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                builder = new Notification.Builder(this);
-            }
-        }
+        builder = new Notification.Builder(this, CHANNEL_ID);
 
         Notification notification = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                notification = builder
-                        .setContentTitle("Wifi File Transfer Running")
-                        .setContentText("Access the server via your web browser")
-                        .setSmallIcon(android.R.drawable.ic_menu_share)
-                        .setContentIntent(pendingIntent)
-                        .build();
-            }
-        }
+        notification = builder
+                .setContentTitle("Wifi File Transfer Running")
+                .setContentText("Access the server via your web browser")
+                .setSmallIcon(android.R.drawable.ic_menu_share)
+                .setContentIntent(pendingIntent)
+                .build();
 
         startForeground(NOTIFICATION_ID, notification);
 

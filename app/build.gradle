@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace 'com.wifi.filetransfer'
-    compileSdk 30
+    compileSdk 37
 
     defaultConfig {
         applicationId "com.wifi.filetransfer"
-        minSdk 8
-        targetSdk 17
+        minSdk 27
+        targetSdk 37
         versionCode 1
         versionName "1.0"
     }
