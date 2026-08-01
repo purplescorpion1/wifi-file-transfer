@@ -24,11 +24,12 @@ public class WifiServerService extends Service {
         return isRunning;
     }
 
-    public static int getPort() {
+    public static int getPort(Context context) {
         if (server != null) {
             return server.getPort();
         }
-        return 8080;
+        android.content.SharedPreferences prefs = context.getSharedPreferences("wifi_transfer_prefs", Context.MODE_PRIVATE);
+        return prefs.getInt("server_port", 8000);
     }
 
     @Override
@@ -89,7 +90,9 @@ public class WifiServerService extends Service {
 
         // Start HTTP Server
         try {
-            server = new HttpServer(getApplicationContext(), 8080);
+            android.content.SharedPreferences prefs = getSharedPreferences("wifi_transfer_prefs", Context.MODE_PRIVATE);
+            int port = prefs.getInt("server_port", 8000);
+            server = new HttpServer(getApplicationContext(), port);
             server.start();
             isRunning = true;
             

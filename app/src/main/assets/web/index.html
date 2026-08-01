@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Wifi File Transfer</title>
     <style>
         :root {
@@ -487,6 +487,125 @@
 
         .empty-icon {
             font-size: 48px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+                height: auto;
+            }
+            .workspace {
+                flex-direction: column;
+                height: auto;
+                overflow: visible;
+            }
+            .sidebar {
+                width: 100%;
+                min-width: 0;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 15px;
+            }
+            .drive-list {
+                flex-direction: row;
+                overflow-x: auto;
+                padding-bottom: 5px;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+            .drive-item {
+                flex-shrink: 0;
+                padding: 8px 12px;
+            }
+            .explorer {
+                width: 100%;
+                height: auto;
+                overflow: visible;
+            }
+            .toolbar {
+                padding: 12px 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .breadcrumbs {
+                width: 100%;
+                flex: none;
+                margin-bottom: 5px;
+            }
+            .actions-bar {
+                width: 100%;
+                justify-content: flex-start;
+                gap: 8px;
+            }
+            .actions-bar button {
+                flex: 1;
+                justify-content: center;
+                padding: 10px;
+            }
+            .file-list-container {
+                overflow: visible;
+            }
+            .file-table {
+                table-layout: fixed;
+                width: 100%;
+            }
+            .file-table th:nth-child(1), .file-table td:nth-child(1) {
+                width: 55%;
+            }
+            .file-table th:nth-child(2), .file-table td:nth-child(2) {
+                width: 20%;
+            }
+            .file-table th:nth-child(3), .file-table td:nth-child(3) {
+                width: 25%;
+            }
+            .file-table th, .file-table td {
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+            .file-name-cell {
+                gap: 6px;
+            }
+            .file-name-cell span:last-child {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                display: block;
+                width: calc(100% - 24px);
+            }
+            .file-actions {
+                opacity: 1;
+                justify-content: flex-end;
+                gap: 4px;
+            }
+            .icon-btn {
+                padding: 6px;
+                font-size: 14px;
+            }
+            .upload-panel {
+                width: 100%;
+                min-width: 0;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+                padding: 15px;
+            }
+            .drop-zone {
+                padding: 20px 10px;
+            }
+            .queue-container {
+                max-height: 250px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 10px 15px;
+            }
+            .header-title h1 {
+                font-size: 16px;
+            }
+            #auth-status {
+                display: none;
+            }
         }
     </style>
 </head>
