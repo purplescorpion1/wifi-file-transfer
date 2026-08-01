@@ -36,6 +36,7 @@ public class MainActivity extends Activity {
     private Button btnStop;
     private CheckBox checkboxPassword;
     private EditText editPassword;
+    private EditText editPort;
     private Button btnSaveSettings;
 
     private boolean doubleBackToExitPressedOnce = false;
@@ -60,6 +61,7 @@ public class MainActivity extends Activity {
         btnStop = findViewById(R.id.btn_stop);
         checkboxPassword = findViewById(R.id.checkbox_password);
         editPassword = findViewById(R.id.edit_password);
+        editPort = findViewById(R.id.edit_port);
         btnSaveSettings = findViewById(R.id.btn_save_settings);
 
         // Check & Request Storage Permissions
@@ -99,7 +101,11 @@ public class MainActivity extends Activity {
         loadSettings();
 
         // Register Broadcast Receiver for Server Status Updates
-        registerReceiver(serverStatusReceiver, new IntentFilter("com.wifi.filetransfer.SERVER_STATUS_CHANGED"));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            registerReceiver(serverStatusReceiver, new IntentFilter("com.wifi.filetransfer.SERVER_STATUS_CHANGED"), Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(serverStatusReceiver, new IntentFilter("com.wifi.filetransfer.SERVER_STATUS_CHANGED"));
+        }
 
         // Initialize / Update UI State
         updateUiState();
@@ -156,20 +162,52 @@ public class MainActivity extends Activity {
         } else {
             editPassword.setHint("Enter password");
         }
+
+        android.content.SharedPreferences prefs = getSharedPreferences("wifi_transfer_prefs", Context.MODE_PRIVATE);
+        int port = prefs.getInt("server_port", 8000);
+        editPort.setText(String.valueOf(port));
     }
 
     private void saveSettings() {
         boolean enabled = checkboxPassword.isChecked();
         String password = editPassword.getText().toString().trim();
+        String portStr = editPort.getText().toString().trim();
 
-        if (fenabled && password.isEmpty() && !PasswordUtils.hasSavedPassword(this)) {
+        if (enabled && password.isEmpty() && !PasswordUtils.hasSavedPassword(this)) {
             Toast.makeText(this, "Please enter a password when protection is enabled.", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        int port = 8000;
+        if (!portStr.isEmpty()) {
+            try {
+                port = Integer.parseInt(portStr);
+                if (port < 1024 || port > 65535) {
+                    Toast.makeText(this, "Please enter a valid port between 1024 and 65535.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Invalid port format.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        } else {
+            Toast.makeText(this, "Please enter a port number (default is 8000).", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Save password settings
         PasswordUtils.savePassword(this, password, enabled);
         editPassword.setText("");
+
+        // Save port settings
+        android.content.SharedPreferences prefs = getSharedPreferences("wifi_transfer_prefs", Context.MODE_PRIVATE);
+        prefs.edit().putInt("server_port", port).apply();
+
         loadSettings();
+
+        // Update current displayed address if running
+        updateUiState();
+
         Toast.makeText(this, "Settings saved successfully.", Toast.LENGTH_SHORT).show();
     }
 
@@ -180,16 +218,127 @@ public class MainActivity extends Activity {
             textStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
             
             String ip = getIpAddress();
-            int port = WifiServerService.getPort();
+            int port = WifiServerService.getPort(this);
             textAddress.setText("http://" + ip + ":" + port);
         } else {
             textStatus.setText("STOPPED");
             textStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-            textAddress.setText("http://---.---.---.---:8080");
+
+            android.content.SharedPreferences prefs = getSharedPreferences("wifi_transfer_prefs", Context.MODE_PRIVATE);
+            int port = prefs.getInt("server_port", 8000);
+            textAddress.setText("http://---.---.---.---:" + port);
         }
     }
 
+    private boolean isPrivate172(String ip) {
+        try {
+            if (ip.startsWith("172.")) {
+                String[] parts = ip.split("\\.");
+                if (parts.length >= 2) {
+                    int secondOctet = Integer.parseInt(parts[1]);
+                    return secondOctet >= 16 && secondOctet <= 31;
+                }
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return false;
+    }
+
     private String getIpAddress() {
+        try {
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+
+            // Priority 1: wlan/eth interface (non-p2p) with private IP (192.168.x.x, 10.x.x.x, 172.x.x.x)
+            for (NetworkInterface intf : interfaces) {
+                try {
+                    if (!intf.isUp() || intf.isLoopback()) continue;
+                } catch (Exception e) {
+                    continue;
+                }
+                String name = intf.getName().toLowerCase();
+                if ((name.contains("wlan") || name.contains("eth")) && !name.contains("p2p")) {
+                    for (InetAddress addr : Collections.list(intf.getInetAddresses())) {
+                        if (!addr.isLoopbackAddress() && addr instanceof Inet4Address) {
+                            String ip = addr.getHostAddress();
+                            if (ip.startsWith("192.168.") || ip.startsWith("10.") || isPrivate172(ip)) {
+                                return ip;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Priority 2: Any wlan/eth interface (including p2p as fallback) with any IPv4
+            for (NetworkInterface intf : interfaces) {
+                try {
+                    if (!intf.isUp() || intf.isLoopback()) continue;
+                } catch (Exception e) {
+                    continue;
+                }
+                String name = intf.getName().toLowerCase();
+                if (name.contains("wlan") || name.contains("eth")) {
+                    for (InetAddress addr : Collections.list(intf.getInetAddresses())) {
+                        if (!addr.isLoopbackAddress() && addr instanceof Inet4Address) {
+                            return addr.getHostAddress();
+                        }
+                    }
+                }
+            }
+
+            // Priority 3: Any interface starting with 192.168. IPv4
+            for (NetworkInterface intf : interfaces) {
+                try {
+                    if (!intf.isUp() || intf.isLoopback()) continue;
+                } catch (Exception e) {
+                    continue;
+                }
+                for (InetAddress addr : Collections.list(intf.getInetAddresses())) {
+                    if (!addr.isLoopbackAddress() && addr instanceof Inet4Address) {
+                        String ip = addr.getHostAddress();
+                        if (ip.startsWith("192.168.")) {
+                            return ip;
+                        }
+                    }
+                }
+            }
+
+            // Priority 4: Any interface with 10.x.x.x or 172.16-31.x.x IPv4
+            for (NetworkInterface intf : interfaces) {
+                try {
+                    if (!intf.isUp() || intf.isLoopback()) continue;
+                } catch (Exception e) {
+                    continue;
+                }
+                for (InetAddress addr : Collections.list(intf.getInetAddresses())) {
+                    if (!addr.isLoopbackAddress() && addr instanceof Inet4Address) {
+                        String ip = addr.getHostAddress();
+                        if (ip.startsWith("10.") || isPrivate172(ip)) {
+                            return ip;
+                        }
+                    }
+                }
+            }
+
+            // Priority 5: Any non-loopback IPv4 address
+            for (NetworkInterface intf : interfaces) {
+                try {
+                    if (!intf.isUp() || intf.isLoopback()) continue;
+                } catch (Exception e) {
+                    continue;
+                }
+                for (InetAddress addr : Collections.list(intf.getInetAddresses())) {
+                    if (!addr.isLoopbackAddress() && addr instanceof Inet4Address) {
+                        return addr.getHostAddress();
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Keep existing WifiManager fallback just in case
         try {
             WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             if (wifiManager != null) {
@@ -201,20 +350,6 @@ public class MainActivity extends Activity {
                             (ipAddress >> 8 & 0xff),
                             (ipAddress >> 16 & 0xff),
                             (ipAddress >> 24 & 0xff));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-            for (NetworkInterface intf : interfaces) {
-                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
-                for (InetAddress addr : addrs) {
-                    if (!addr.isLoopbackAddress() && addr instanceof Inet4Address) {
-                        return addr.getHostAddress();
-                    }
                 }
             }
         } catch (Exception e) {
