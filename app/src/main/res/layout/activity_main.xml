@@ -160,6 +160,8 @@
                 android:hint="Enter password"
                 android:inputType="textPassword"
                 android:textColor="#37474F"
+                android:nextFocusUp="@id/checkbox_password"
+                android:nextFocusDown="@+id/edit_port"
                 android:focusable="true" />
 
             <TextView
@@ -178,6 +180,8 @@
                 android:hint="8000"
                 android:inputType="number"
                 android:textColor="#37474F"
+                android:nextFocusUp="@id/edit_password"
+                android:nextFocusDown="@+id/btn_save_settings"
                 android:focusable="true" />
 
             <Button
@@ -188,6 +192,7 @@
                 android:backgroundTint="#2196F3"
                 android:textColor="#FFFFFF"
                 android:layout_marginTop="12dp"
+                android:nextFocusUp="@id/edit_port"
                 android:focusable="true" />
         </LinearLayout>
 

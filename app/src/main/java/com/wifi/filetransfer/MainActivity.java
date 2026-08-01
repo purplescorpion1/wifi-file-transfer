@@ -102,7 +102,7 @@ public class MainActivity extends Activity {
         loadSettings();
 
         // Register Broadcast Receiver for Server Status Updates
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             registerReceiver(serverStatusReceiver, new IntentFilter("com.wifi.filetransfer.SERVER_STATUS_CHANGED"), Context.RECEIVER_NOT_EXPORTED);
         } else {
             registerReceiver(serverStatusReceiver, new IntentFilter("com.wifi.filetransfer.SERVER_STATUS_CHANGED"));
@@ -167,24 +167,6 @@ public class MainActivity extends Activity {
         android.content.SharedPreferences prefs = getSharedPreferences("wifi_transfer_prefs", Context.MODE_PRIVATE);
         int port = prefs.getInt("server_port", 8000);
         editPort.setText(String.valueOf(port));
-
-        updateDynamicFocus();
-    }
-
-    private void updateDynamicFocus() {
-        boolean enabled = checkboxPassword.isChecked();
-        checkboxPassword.setNextFocusUpId(R.id.btn_stop);
-        if (enabled) {
-            checkboxPassword.setNextFocusDownId(R.id.edit_password);
-            editPassword.setNextFocusUpId(R.id.checkbox_password);
-            editPassword.setNextFocusDownId(R.id.edit_port);
-            editPort.setNextFocusUpId(R.id.edit_password);
-        } else {
-            checkboxPassword.setNextFocusDownId(R.id.edit_port);
-            editPort.setNextFocusUpId(R.id.checkbox_password);
-        }
-        editPort.setNextFocusDownId(R.id.btn_save_settings);
-        btnSaveSettings.setNextFocusUpId(R.id.edit_port);
     }
 
     private void saveSettings() {
