@@ -167,6 +167,18 @@ public class MainActivity extends Activity {
         android.content.SharedPreferences prefs = getSharedPreferences("wifi_transfer_prefs", Context.MODE_PRIVATE);
         int port = prefs.getInt("server_port", 8000);
         editPort.setText(String.valueOf(port));
+
+        updateDynamicFocus();
+    }
+
+    private void updateDynamicFocus() {
+        if (checkboxPassword.isChecked()) {
+            checkboxPassword.setNextFocusDownId(R.id.edit_password);
+            editPort.setNextFocusUpId(R.id.edit_password);
+        } else {
+            checkboxPassword.setNextFocusDownId(R.id.edit_port);
+            editPort.setNextFocusUpId(R.id.checkbox_password);
+        }
     }
 
     private void saveSettings() {
@@ -371,21 +383,25 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public void onBackPressed() {
-        if (doubleBackToExitPressedOnce) {
-            triggerServiceAction("STOP");
-            super.onBackPressed();
-            return;
-        }
-
-        this.doubleBackToExitPressedOnce = true;
-        Toast.makeText(this, "Press BACK again to exit & stop server.", Toast.LENGTH_SHORT).show();
-
-        doubleBackHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                doubleBackToExitPressedOnce = false;
+    public boolean onKeyDown(int keyCode, android.view.KeyEvent event) {
+        if (keyCode == android.view.KeyEvent.KEYCODE_BACK) {
+            if (doubleBackToExitPressedOnce) {
+                triggerServiceAction("STOP");
+                finishAndRemoveTask();
+                return true;
             }
-        }, 2000);
+
+            this.doubleBackToExitPressedOnce = true;
+            Toast.makeText(this, "Press BACK again to exit & stop server.", Toast.LENGTH_SHORT).show();
+
+            doubleBackHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    doubleBackToExitPressedOnce = false;
+                }
+            }, 2000);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 }

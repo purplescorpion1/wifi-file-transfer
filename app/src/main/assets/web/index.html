@@ -758,6 +758,19 @@
                     showLogin();
                     throw new Error("Unauthorized");
                 }
+
+                // Clone the response to inspect the JSON body for unauthorized payload
+                const clone = response.clone();
+                try {
+                    const data = await clone.json();
+                    if (data && data.status === "error" && data.message === "Unauthorized") {
+                        showLogin();
+                        throw new Error("Unauthorized");
+                    }
+                } catch (jsonErr) {
+                    // Not JSON or parsing error, ignore
+                }
+
                 return response;
             } catch (e) {
                 if (e.message !== "Unauthorized") {

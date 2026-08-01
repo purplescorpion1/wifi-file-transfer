@@ -98,6 +98,7 @@
                 android:textStyle="bold"
                 android:layout_marginEnd="8dp"
                 android:nextFocusRight="@id/btn_stop"
+                android:nextFocusDown="@+id/checkbox_password"
                 android:focusable="true" />
 
             <Button
