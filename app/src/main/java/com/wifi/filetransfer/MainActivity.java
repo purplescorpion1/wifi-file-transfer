@@ -94,6 +94,7 @@ public class MainActivity extends Activity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 editPassword.setEnabled(isChecked);
+                updateDynamicFocus();
             }
         });
 
@@ -379,8 +380,6 @@ public class MainActivity extends Activity {
 
         this.doubleBackToExitPressedOnce = true;
         Toast.makeText(this, "Press BACK again to exit & stop server.", Toast.LENGTH_SHORT).show();
-
-        moveTaskToBack(true);
 
         doubleBackHandler.postDelayed(new Runnable() {
             @Override
