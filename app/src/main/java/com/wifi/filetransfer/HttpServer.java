@@ -602,7 +602,19 @@ public class HttpServer {
         }
 
         private void sendJsonResponse(OutputStream out, int status, String json) throws IOException {
-            out.write(("HTTP/1.1 " + status + " OK\r\n").getBytes());
+            String statusPhrase = "OK";
+            if (status == 401) {
+                statusPhrase = "Unauthorized";
+            } else if (status == 400) {
+                statusPhrase = "Bad Request";
+            } else if (status == 404) {
+                statusPhrase = "Not Found";
+            } else if (status == 405) {
+                statusPhrase = "Method Not Allowed";
+            } else if (status == 500) {
+                statusPhrase = "Internal Server Error";
+            }
+            out.write(("HTTP/1.1 " + status + " " + statusPhrase + "\r\n").getBytes());
             out.write("Content-Type: application/json; charset=UTF-8\r\n".getBytes());
             out.write(("Content-Length: " + json.getBytes("UTF-8").length + "\r\n").getBytes());
             out.write("Connection: close\r\n".getBytes());
