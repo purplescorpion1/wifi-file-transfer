@@ -9,25 +9,25 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp"
+        android:padding="16dp"
         android:gravity="center_horizontal">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Wifi File Transfer"
-            android:textSize="28sp"
+            android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="#1976D2"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="4dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Run your own wireless file server"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textColor="#546E7A"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="16dp" />
 
         <!-- Status Card -->
         <LinearLayout
@@ -35,15 +35,15 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="#FFFFFF"
-            android:padding="16dp"
+            android:padding="12dp"
             android:elevation="4dp"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="12dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Server Status"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="#78909C"
                 android:textStyle="bold" />
 
@@ -53,16 +53,16 @@
                 android:layout_height="wrap_content"
                 android:text="STOPPED"
                 android:textColor="#D32F2F"
-                android:textSize="22sp"
+                android:textSize="18sp"
                 android:textStyle="bold"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="12dp" />
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="8dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Web UI Address:"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="#78909C"
                 android:textStyle="bold" />
 
@@ -72,9 +72,9 @@
                 android:layout_height="wrap_content"
                 android:text="http://---.---.---.---:8080"
                 android:textColor="#1565C0"
-                android:textSize="18sp"
+                android:textSize="15sp"
                 android:textStyle="bold"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="2dp"
                 android:textIsSelectable="true" />
         </LinearLayout>
 
@@ -84,7 +84,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="12dp">
 
             <Button
                 android:id="@+id/btn_start"
@@ -94,9 +94,9 @@
                 android:text="START SERVER"
                 android:backgroundTint="#4CAF50"
                 android:textColor="#FFFFFF"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 android:textStyle="bold"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="6dp"
                 android:nextFocusRight="@id/btn_stop"
                 android:nextFocusDown="@+id/checkbox_password"
                 android:focusable="true" />
@@ -109,9 +109,9 @@
                 android:text="STOP SERVER"
                 android:backgroundTint="#F44336"
                 android:textColor="#FFFFFF"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 android:textStyle="bold"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
                 android:nextFocusLeft="@id/btn_start"
                 android:nextFocusDown="@+id/checkbox_password"
                 android:focusable="true" />
@@ -123,18 +123,18 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="#FFFFFF"
-            android:padding="16dp"
+            android:padding="12dp"
             android:elevation="4dp"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="12dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Security Settings"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textColor="#37474F"
                 android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
+                android:layout_marginBottom="8dp" />
 
             <CheckBox
                 android:id="@+id/checkbox_password"
@@ -142,17 +142,17 @@
                 android:layout_height="wrap_content"
                 android:text="Enable Web UI Password Protection"
                 android:textColor="#37474F"
-                android:textSize="14dp"
-                android:layout_marginBottom="12dp"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp"
                 android:focusable="true" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Set Access Password:"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="#78909C"
-                android:layout_marginBottom="4dp" />
+                android:layout_marginBottom="2dp" />
 
             <EditText
                 android:id="@+id/edit_password"
@@ -161,6 +161,7 @@
                 android:hint="Enter password"
                 android:inputType="textPassword"
                 android:textColor="#37474F"
+                android:textSize="13sp"
                 android:nextFocusUp="@id/checkbox_password"
                 android:nextFocusDown="@+id/edit_port"
                 android:focusable="true" />
@@ -169,10 +170,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Server Port (Default is 8000):"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="#78909C"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="4dp" />
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="2dp" />
 
             <EditText
                 android:id="@+id/edit_port"
@@ -181,6 +182,7 @@
                 android:hint="8000"
                 android:inputType="number"
                 android:textColor="#37474F"
+                android:textSize="13sp"
                 android:nextFocusUp="@id/edit_password"
                 android:nextFocusDown="@+id/btn_save_settings"
                 android:focusable="true" />
@@ -192,7 +194,8 @@
                 android:text="SAVE SETTINGS"
                 android:backgroundTint="#2196F3"
                 android:textColor="#FFFFFF"
-                android:layout_marginTop="12dp"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"
                 android:nextFocusUp="@id/edit_port"
                 android:focusable="true" />
         </LinearLayout>
@@ -201,7 +204,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Press Back button TWICE to close &amp; exit server."
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:textColor="#90A4AE"
             android:gravity="center" />
 
