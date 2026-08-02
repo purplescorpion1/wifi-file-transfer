@@ -1,6 +1,6 @@
 <h1>App to run a WiFi file transfer server on android</h1>
 
-<h2>Features<h2>
+<h2>Features</h2>
 <p>Copy files to server or drives attached to server <br>
 Download files from server or files attached to server <br>
 Add folders <br>
@@ -14,3 +14,4 @@ Ability to change port server runs on </p>
 Set required settings in app <br>
 Start server <br>
 Access via web browser at ip:port displayed
+</p>
