@@ -13,5 +13,6 @@ Ability to change port server runs on </p>
 <p>Install app <br>
 Set required settings in app <br>
 Start server <br>
-Access via web browser at ip:port displayed
+Access via web browser at ip:port displayed <br>
+Press home button on phone or remote to minimise server screen and leave running in background or Double press back to exit and close server 
 </p>
