@@ -284,42 +284,70 @@ public class HttpServer {
         }
 
         private void listDrives(OutputStream out) throws IOException {
-            List<Map<String, String>> drives = new ArrayList<>();
-            
-            File primaryStorage = Environment.getExternalStorageDirectory();
-            Map<String, String> primaryMap = new HashMap<>();
-            primaryMap.put("name", "Internal Storage");
-            primaryMap.put("path", primaryStorage.getAbsolutePath());
-            drives.add(primaryMap);
+            // Keep unique paths, preserving order
+            java.util.LinkedHashMap<String, String> drivesMap = new java.util.LinkedHashMap<>();
 
-            File storageDir = new File("/storage");
-            if (storageDir.exists() && storageDir.isDirectory()) {
-                File[] files = storageDir.listFiles();
-                if (files != null) {
-                    for (File f : files) {
-                        if (f.isDirectory() && f.canRead()) {
-                            String name = f.getName();
-                            if (!name.equals("self") && !name.equals("emulated") && !name.equals("container")) {
-                                Map<String, String> driveMap = new HashMap<>();
-                                driveMap.put("name", "Drive (" + name + ")");
-                                driveMap.put("path", f.getAbsolutePath());
-                                drives.add(driveMap);
+            // 1. Primary Internal Storage
+            File primaryStorage = Environment.getExternalStorageDirectory();
+            String primaryPath = primaryStorage.getAbsolutePath();
+            drivesMap.put(primaryPath, "Internal Storage");
+
+            // 2. Discover via getExternalFilesDirs
+            try {
+                File[] externalDirs = context.getExternalFilesDirs(null);
+                if (externalDirs != null) {
+                    for (File f : externalDirs) {
+                        if (f != null) {
+                            String absPath = f.getAbsolutePath();
+                            int idx = absPath.indexOf("/Android/data/");
+                            if (idx > 0) {
+                                String rootPath = absPath.substring(0, idx);
+                                if (!drivesMap.containsKey(rootPath)) {
+                                    File rootFile = new File(rootPath);
+                                    String name = rootFile.getName();
+                                    drivesMap.put(rootPath, "Drive (" + name + ")");
+                                }
                             }
                         }
                     }
                 }
+            } catch (Exception e) {
+                Log.e(TAG, "Error discovering external dirs via getExternalFilesDirs", e);
             }
 
+            // 3. Discover via listing /storage
+            try {
+                File storageDir = new File("/storage");
+                if (storageDir.exists() && storageDir.isDirectory()) {
+                    File[] files = storageDir.listFiles();
+                    if (files != null) {
+                        for (File f : files) {
+                            String name = f.getName();
+                            if (!name.equals("self") && !name.equals("emulated") && !name.equals("container") && !name.equals("knox")) {
+                                String absPath = f.getAbsolutePath();
+                                if (!drivesMap.containsKey(absPath)) {
+                                    drivesMap.put(absPath, "Drive (" + name + ")");
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error discovering drives via /storage listing", e);
+            }
+
+            // Build JSON output
             StringBuilder json = new StringBuilder("[");
-            for (int i = 0; i < drives.size(); i++) {
-                Map<String, String> d = drives.get(i);
-                json.append("{");
-                json.append("\"name\":\"").append(escapeJson(d.get("name"))).append("\",");
-                json.append("\"path\":\"").append(escapeJson(d.get("path"))).append("\"");
-                json.append("}");
-                if (i < drives.size() - 1) {
+            int count = 0;
+            for (Map.Entry<String, String> entry : drivesMap.entrySet()) {
+                if (count > 0) {
                     json.append(",");
                 }
+                json.append("{");
+                json.append("\"name\":\"").append(escapeJson(entry.getValue())).append("\",");
+                json.append("\"path\":\"").append(escapeJson(entry.getKey())).append("\"");
+                json.append("}");
+                count++;
             }
             json.append("]");
 
