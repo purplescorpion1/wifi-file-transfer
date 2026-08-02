@@ -9,7 +9,7 @@ Copy/Paste folders/files <br>
 Add password to access server <br>
 Ability to change port server runs on </p>
 
-<h2>Usage>
+<h2>Usage</h2>
 <p>Install app <br>
 Set required settings in app <br>
 Start server <br>
