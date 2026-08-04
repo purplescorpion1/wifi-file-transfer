@@ -148,6 +148,21 @@
             gap: 15px;
         }
 
+        .control-row {
+            padding: 10px 20px;
+            background-color: #FAFBFD;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .control-row button {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
         .breadcrumbs {
             display: flex;
             align-items: center;
@@ -542,6 +557,16 @@
                 justify-content: center;
                 padding: 10px;
             }
+            .control-row {
+                padding: 10px 15px;
+                gap: 8px;
+            }
+            .control-row button {
+                flex: 1 1 calc(50% - 8px);
+                justify-content: center;
+                padding: 8px;
+                font-size: 12px;
+            }
             .file-list-container {
                 overflow: visible;
             }
@@ -550,10 +575,10 @@
                 width: 100%;
             }
             .file-table th:nth-child(1), .file-table td:nth-child(1) {
-                width: 55%;
+                width: 15%;
             }
             .file-table th:nth-child(2), .file-table td:nth-child(2) {
-                width: 20%;
+                width: 60%;
             }
             .file-table th:nth-child(3), .file-table td:nth-child(3) {
                 width: 25%;
@@ -640,17 +665,27 @@
                 <div class="actions-bar">
                     <button id="new-folder-btn" onclick="openNewFolderModal()">📁 New Folder</button>
                     <button id="refresh-btn" class="secondary" onclick="refreshDirectory()">🔄 Refresh</button>
-                    <button id="paste-btn" class="secondary" onclick="pasteCopiedItem()" style="display: none;">📋 Paste</button>
                 </div>
+            </div>
+
+            <div class="control-row">
+                <button id="select-all-btn" class="secondary" onclick="toggleSelectAll()">☑️ Select All</button>
+                <button id="download-btn" onclick="downloadSelected()">⬇️ Download</button>
+                <button id="copy-btn" onclick="copySelected()">📋 Copy</button>
+                <button id="paste-btn" class="secondary" onclick="pasteSelected()">📋 Paste</button>
+                <button id="rename-btn" onclick="renameSelected()">✏️ Rename</button>
+                <button id="delete-btn" class="danger" onclick="deleteSelected()">❌ Delete</button>
             </div>
 
             <div class="file-list-container">
                 <table class="file-table">
                     <thead>
                         <tr>
+                            <th style="width: 50px; text-align: center;">
+                                <input type="checkbox" id="header-master-checkbox" onclick="handleMasterCheckboxClick(this)">
+                            </th>
                             <th>Name</th>
                             <th>Size</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="file-list">
@@ -723,7 +758,8 @@
 
     <script>
         let currentPath = "";
-        let copiedItem = null;
+        let copiedItems = [];
+        let currentFiles = [];
         let uploadQueue = [];
         let activeUpload = null;
         let isUploading = false;
@@ -918,6 +954,8 @@
                     return a.name.localeCompare(b.name);
                 });
 
+                currentFiles = files;
+
                 const tbody = document.getElementById("file-list");
                 const emptyView = document.getElementById("empty-state-view");
                 tbody.innerHTML = "";
@@ -928,7 +966,12 @@
                     emptyView.style.display = "none";
                 }
 
-                files.forEach(file => {
+                const master = document.getElementById("header-master-checkbox");
+                if (master) {
+                    master.checked = false;
+                }
+
+                files.forEach((file, index) => {
                     const row = document.createElement("tr");
                     row.className = "file-row";
                     
@@ -936,6 +979,9 @@
                     const formattedSize = file.is_dir ? "--" : formatBytes(file.size);
                     
                     row.innerHTML = `
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="file-checkbox" data-index="${index}" onclick="handleCheckboxClick(event)">
+                        </td>
                         <td>
                             <div class="file-name-cell" onclick="handleItemClick('${escapeSingleQuote(file.path)}', ${file.is_dir})">
                                 <span class="file-icon">${icon}</span>
@@ -943,17 +989,11 @@
                             </div>
                         </td>
                         <td>${formattedSize}</td>
-                        <td>
-                            <div class="file-actions">
-                                ${!file.is_dir ? `<button class="icon-btn" onclick="downloadFile('${escapeSingleQuote(file.path)}')">⬇️</button>` : ''}
-                                <button class="icon-btn" onclick="openRenameModal('${escapeSingleQuote(file.path)}', '${escapeSingleQuote(file.name)}')">✏️</button>
-                                <button class="icon-btn" onclick="copyItem('${escapeSingleQuote(file.path)}', '${escapeSingleQuote(file.name)}')">📋</button>
-                                <button class="icon-btn delete-btn" onclick="deleteItem('${escapeSingleQuote(file.path)}')">❌</button>
-                            </div>
-                        </td>
                     `;
                     tbody.appendChild(row);
                 });
+
+                updateControlsState();
             } catch (e) {
                 console.error("Failed to load folder", e);
             }
@@ -981,7 +1021,134 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        // Folder, Rename, Copy, Delete operations
+        // Checkboxes & selection management
+        function handleCheckboxClick(event) {
+            event.stopPropagation();
+
+            const checkboxes = document.querySelectorAll(".file-checkbox");
+            const checkedCount = document.querySelectorAll(".file-checkbox:checked").length;
+            const master = document.getElementById("header-master-checkbox");
+            if (master) {
+                master.checked = (checkboxes.length > 0 && checkedCount === checkboxes.length);
+            }
+
+            updateControlsState();
+        }
+
+        function handleMasterCheckboxClick(master) {
+            const checkboxes = document.querySelectorAll(".file-checkbox");
+            checkboxes.forEach(cb => {
+                cb.checked = master.checked;
+            });
+            updateControlsState();
+        }
+
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll(".file-checkbox");
+            const checkedCount = document.querySelectorAll(".file-checkbox:checked").length;
+            const shouldCheck = (checkedCount < checkboxes.length);
+
+            checkboxes.forEach(cb => {
+                cb.checked = shouldCheck;
+            });
+
+            const master = document.getElementById("header-master-checkbox");
+            if (master) {
+                master.checked = shouldCheck;
+            }
+
+            updateControlsState();
+        }
+
+        function getSelectedItems() {
+            const selected = [];
+            const checkboxes = document.querySelectorAll(".file-checkbox:checked");
+            checkboxes.forEach(cb => {
+                const index = parseInt(cb.getAttribute("data-index"));
+                if (!isNaN(index) && currentFiles[index]) {
+                    selected.push(currentFiles[index]);
+                }
+            });
+            return selected;
+        }
+
+        function updateControlsState() {
+            const selected = getSelectedItems();
+            const count = selected.length;
+
+            const downloadBtn = document.getElementById("download-btn");
+            const copyBtn = document.getElementById("copy-btn");
+            const renameBtn = document.getElementById("rename-btn");
+            const deleteBtn = document.getElementById("delete-btn");
+            const selectAllBtn = document.getElementById("select-all-btn");
+
+            // Update Select All / Deselect All text
+            const checkboxes = document.querySelectorAll(".file-checkbox");
+            if (checkboxes.length > 0 && count === checkboxes.length) {
+                selectAllBtn.innerHTML = "⬜ Deselect All";
+            } else {
+                selectAllBtn.innerHTML = "☑️ Select All";
+            }
+
+            // Enable / Disable buttons
+            if (count > 0) {
+                downloadBtn.disabled = false;
+                downloadBtn.style.opacity = "1";
+                downloadBtn.style.cursor = "pointer";
+
+                copyBtn.disabled = false;
+                copyBtn.style.opacity = "1";
+                copyBtn.style.cursor = "pointer";
+
+                deleteBtn.disabled = false;
+                deleteBtn.style.opacity = "1";
+                deleteBtn.style.cursor = "pointer";
+            } else {
+                downloadBtn.disabled = true;
+                downloadBtn.style.opacity = "0.5";
+                downloadBtn.style.cursor = "not-allowed";
+
+                copyBtn.disabled = true;
+                copyBtn.style.opacity = "0.5";
+                copyBtn.style.cursor = "not-allowed";
+
+                deleteBtn.disabled = true;
+                deleteBtn.style.opacity = "0.5";
+                deleteBtn.style.cursor = "not-allowed";
+            }
+
+            // Rename button specific requirements:
+            // "In the case where multiple files/folders are selected disable the rename button as this only be done if one file or folder is selected and make the icon/button for rename different when multiple files/folders are selected to make it clear it cannot be selected."
+            if (count === 1) {
+                renameBtn.disabled = false;
+                renameBtn.innerHTML = "✏️ Rename";
+                renameBtn.style.opacity = "1";
+                renameBtn.style.cursor = "pointer";
+            } else if (count > 1) {
+                renameBtn.disabled = true;
+                renameBtn.innerHTML = "🚫 Rename";
+                renameBtn.style.opacity = "0.5";
+                renameBtn.style.cursor = "not-allowed";
+            } else {
+                renameBtn.disabled = true;
+                renameBtn.innerHTML = "✏️ Rename";
+                renameBtn.style.opacity = "0.5";
+                renameBtn.style.cursor = "not-allowed";
+            }
+
+            const pasteBtn = document.getElementById("paste-btn");
+            if (copiedItems && copiedItems.length > 0) {
+                pasteBtn.disabled = false;
+                pasteBtn.style.opacity = "1";
+                pasteBtn.style.cursor = "pointer";
+            } else {
+                pasteBtn.disabled = true;
+                pasteBtn.style.opacity = "0.5";
+                pasteBtn.style.cursor = "not-allowed";
+            }
+        }
+
+        // Folder, Rename, Copy, Paste, Delete, Download operations
         let activeRenamePath = "";
         
         function openRenameModal(path, name) {
@@ -1009,6 +1176,12 @@
             }
         }
 
+        function renameSelected() {
+            const selected = getSelectedItems();
+            if (selected.length !== 1) return;
+            openRenameModal(selected[0].path, selected[0].name);
+        }
+
         function openNewFolderModal() {
             document.getElementById("new-folder-name").value = "";
             document.getElementById("folder-overlay").style.display = "flex";
@@ -1033,47 +1206,99 @@
             }
         }
 
-        async function deleteItem(path) {
-            if (!confirm("Are you sure you want to delete this file or directory?")) return;
+        function copySelected() {
+            const selected = getSelectedItems();
+            if (selected.length === 0) return;
+            copiedItems = selected.map(item => ({ path: item.path, name: item.name }));
+            updateControlsState();
+            alert(`Copied ${copiedItems.length} item(s) to clipboard.`);
+        }
 
-            try {
-                const res = await apiFetch(`/api/delete?path=${encodeURIComponent(path)}`, { method: "POST" });
-                const status = await res.json();
-                if (status.status === "success") {
-                    await refreshDirectory();
-                } else {
-                    alert("Error deleting item: " + status.message);
+        async function pasteSelected() {
+            if (copiedItems.length === 0) return;
+
+            let successCount = 0;
+            let failCount = 0;
+            let lastError = "";
+
+            for (const item of copiedItems) {
+                try {
+                    const res = await apiFetch(`/api/copy_paste?src_path=${encodeURIComponent(item.path)}&dest_dir=${encodeURIComponent(currentPath)}`, { method: "POST" });
+                    const status = await res.json();
+                    if (status.status === "success") {
+                        successCount++;
+                    } else {
+                        failCount++;
+                        lastError = status.message;
+                    }
+                } catch (e) {
+                    failCount++;
+                    lastError = "Network error";
                 }
-            } catch (e) {
-                alert("Operation failed");
             }
+
+            if (failCount > 0) {
+                alert(`Pasted ${successCount} items. Failed to paste ${failCount} items. Last error: ${lastError}`);
+            } else {
+                alert(`Successfully pasted ${successCount} item(s).`);
+            }
+            await refreshDirectory();
         }
 
-        function copyItem(path, name) {
-            copiedItem = { path, name };
-            document.getElementById("paste-btn").style.display = "inline-flex";
-            alert("Copied " + name + " to clipboard");
-        }
+        async function deleteSelected() {
+            const selected = getSelectedItems();
+            if (selected.length === 0) return;
 
-        async function pasteCopiedItem() {
-            if (!copiedItem) return;
+            if (!confirm(`Are you sure you want to delete the selected ${selected.length} item(s)?`)) return;
 
-            try {
-                const res = await apiFetch(`/api/copy_paste?src_path=${encodeURIComponent(copiedItem.path)}&dest_dir=${encodeURIComponent(currentPath)}`, { method: "POST" });
-                const status = await res.json();
-                if (status.status === "success") {
-                    await refreshDirectory();
-                } else {
-                    alert("Error pasting item: " + status.message);
+            let successCount = 0;
+            let failCount = 0;
+            let lastError = "";
+
+            for (const item of selected) {
+                try {
+                    const res = await apiFetch(`/api/delete?path=${encodeURIComponent(item.path)}`, { method: "POST" });
+                    const status = await res.json();
+                    if (status.status === "success") {
+                        successCount++;
+                    } else {
+                        failCount++;
+                        lastError = status.message;
+                    }
+                } catch (e) {
+                    failCount++;
+                    lastError = "Network error";
                 }
-            } catch (e) {
-                alert("Operation failed");
             }
+
+            if (failCount > 0) {
+                alert(`Deleted ${successCount} items. Failed to delete ${failCount} items. Last error: ${lastError}`);
+            }
+            await refreshDirectory();
         }
 
-        function downloadFile(path) {
+        function downloadSelected() {
+            const selected = getSelectedItems();
+            if (selected.length === 0) return;
+
+            const files = selected.filter(item => !item.is_dir);
+            if (files.length === 0) {
+                alert("No files selected for download (folders cannot be downloaded directly).");
+                return;
+            }
+
             const authParam = getAuthParam();
-            window.open(`/api/download?path=${encodeURIComponent(path)}${authParam}`, "_blank");
+            files.forEach((file, index) => {
+                setTimeout(() => {
+                    const url = `/api/download?path=${encodeURIComponent(file.path)}${authParam}`;
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }, index * 300);
+            });
         }
 
         function closeModal(id) {
