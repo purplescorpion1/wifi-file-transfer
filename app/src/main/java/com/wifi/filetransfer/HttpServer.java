@@ -41,6 +41,28 @@ public class HttpServer {
         return port;
     }
 
+    public static File resolveUploadFile(File destDir, String filename, boolean replace) {
+        File target = new File(destDir, filename);
+        if (replace || !target.exists()) {
+            return target;
+        }
+
+        String baseName = filename;
+        String extension = "";
+        int dotIdx = filename.lastIndexOf('.');
+        if (dotIdx > 0) {
+            baseName = filename.substring(0, dotIdx);
+            extension = filename.substring(dotIdx);
+        }
+
+        int count = 1;
+        while (target.exists()) {
+            target = new File(destDir, baseName + " (" + count + ")" + extension);
+            count++;
+        }
+        return target;
+    }
+
     public synchronized void start() throws IOException {
         if (isRunning) return;
         serverSocket = new ServerSocket(port);
@@ -519,6 +541,7 @@ public class HttpServer {
                 String destDir = queryParams.get("dest_dir");
                 String filename = queryParams.get("filename");
                 String contentLengthStr = headers.get("content-length");
+                boolean replace = "true".equalsIgnoreCase(queryParams.get("replace"));
                 
                 if (destDir == null || filename == null || contentLengthStr == null) {
                     sendJsonResponse(out, 400, "{\"status\":\"error\",\"message\":\"Missing upload metadata\"}");
@@ -526,7 +549,7 @@ public class HttpServer {
                 }
                 
                 long contentLength = Long.parseLong(contentLengthStr);
-                File target = new File(destDir, filename);
+                File target = resolveUploadFile(new File(destDir), filename, replace);
                 
                 FileOutputStream fos = null;
                 try {
@@ -556,6 +579,10 @@ public class HttpServer {
             } else {
                 sendErrorResponse(out, 404, "Not Found", "POST Endpoint not found: " + uri);
             }
+        }
+
+        public File resolveUploadFile(File destDir, String filename, boolean replace) {
+            return HttpServer.resolveUploadFile(destDir, filename, replace);
         }
 
         private void copyRecursive(File src, File dest) throws IOException {
