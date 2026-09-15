@@ -49,6 +49,12 @@ public class HttpServerUploadTest {
 
         File resolved2 = HttpServer.resolveUploadFile(dir, filename, false);
         Assert.assertEquals(new File(dir, "photo (2).jpg"), resolved2);
+
+        File file3 = new File(dir, "photo (2).jpg");
+        file3.createNewFile();
+
+        File resolved3 = HttpServer.resolveUploadFile(dir, filename, false);
+        Assert.assertEquals(new File(dir, "photo (3).jpg"), resolved3);
     }
 
     @Test
