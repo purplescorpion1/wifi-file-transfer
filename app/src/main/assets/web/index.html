@@ -702,6 +702,10 @@
         <!-- Upload Panel (Right Sidebar) -->
         <aside class="upload-panel">
             <div class="section-title">Upload Files</div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                <input type="checkbox" id="replace-file-checkbox">
+                <label for="replace-file-checkbox" style="cursor: pointer;">Replace existing files</label>
+            </div>
             <div class="drop-zone" id="drop-zone" onclick="triggerFileSelect()">
                 <div class="drop-icon">📤</div>
                 <div class="drop-text">Drag & Drop files here</div>
@@ -763,6 +767,7 @@
         let uploadQueue = [];
         let activeUpload = null;
         let isUploading = false;
+        let isDragAndDropSetup = false;
         let sessionToken = localStorage.getItem("session_token") || "";
 
         // Initial setup on window load
@@ -1307,6 +1312,9 @@
 
         // Sequential Queue Upload Management
         function setupDragAndDrop() {
+            if (isDragAndDropSetup) return;
+            isDragAndDropSetup = true;
+
             const dropZone = document.getElementById("drop-zone");
 
             window.addEventListener("dragover", e => e.preventDefault());
@@ -1314,15 +1322,19 @@
 
             dropZone.addEventListener("dragover", (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 dropZone.classList.add("dragover");
             });
 
-            dropZone.addEventListener("dragleave", () => {
+            dropZone.addEventListener("dragleave", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 dropZone.classList.remove("dragover");
             });
 
             dropZone.addEventListener("drop", (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 dropZone.classList.remove("dragover");
                 
                 const files = e.dataTransfer.files;
@@ -1432,7 +1444,8 @@
             activeUpload = xhr;
 
             const authParam = getAuthParam();
-            const uploadUrl = `/api/upload?dest_dir=${encodeURIComponent(currentPath)}&filename=${encodeURIComponent(file.name)}${authParam}`;
+            const replaceChecked = document.getElementById("replace-file-checkbox") ? document.getElementById("replace-file-checkbox").checked : false;
+            const uploadUrl = `/api/upload?dest_dir=${encodeURIComponent(currentPath)}&filename=${encodeURIComponent(file.name)}&replace=${replaceChecked}${authParam}`;
 
             let startTime = Date.now();
 
