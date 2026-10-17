@@ -139,6 +139,46 @@
             overflow: hidden;
         }
 
+        /* Storage Bar */
+        .storage-bar-container {
+            padding: 12px 20px;
+            background-color: #FAFBFD;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .storage-text-info {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .storage-line-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #E0E0E0;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .storage-bar-used {
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .storage-bar-free {
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s ease;
+        }
+
         .toolbar {
             padding: 15px 20px;
             border-bottom: 1px solid var(--border-color);
@@ -567,6 +607,12 @@
                 padding: 8px;
                 font-size: 12px;
             }
+            .storage-bar-container {
+                padding: 10px 15px;
+            }
+            .storage-text-info {
+                font-size: 12px;
+            }
             .file-list-container {
                 overflow: visible;
             }
@@ -658,6 +704,17 @@
 
         <!-- Main Explorer -->
         <main class="explorer">
+            <!-- Display bar for drive storage usage -->
+            <div class="storage-bar-container" id="storage-bar-container">
+                <div class="storage-text-info" id="storage-text-info">
+                    <span id="storage-summary-text">Calculating storage...</span>
+                </div>
+                <div class="storage-line-bar">
+                    <div class="storage-bar-used" id="storage-bar-used" style="width: 0%;"></div>
+                    <div class="storage-bar-free" id="storage-bar-free" style="width: 0%;"></div>
+                </div>
+            </div>
+
             <div class="toolbar">
                 <div class="breadcrumbs" id="breadcrumbs">
                     <!-- Dynamic Breadcrumbs -->
@@ -946,9 +1003,61 @@
             });
         }
 
+        // Storage Bar Display
+        async function updateStorageInfo() {
+            if (!currentPath) return;
+            try {
+                const res = await apiFetch(`/api/storage?path=${encodeURIComponent(currentPath)}`);
+                const data = await res.json();
+                renderStorageBar(data.total_space, data.free_space, data.used_space);
+            } catch (e) {
+                console.error("Failed to update storage info", e);
+            }
+        }
+
+        function renderStorageBar(total, free, used) {
+            const summarySpan = document.getElementById("storage-summary-text");
+            const barUsed = document.getElementById("storage-bar-used");
+            const barFree = document.getElementById("storage-bar-free");
+
+            if (!summarySpan || !barUsed || !barFree) return;
+
+            if (!total || total <= 0) {
+                summarySpan.textContent = "Storage information unavailable";
+                barUsed.style.width = "0%";
+                barFree.style.width = "0%";
+                return;
+            }
+
+            const usedFormatted = formatStorageBytes(used);
+            const freeFormatted = formatStorageBytes(free);
+            const totalFormatted = formatStorageBytes(total);
+
+            summarySpan.textContent = `${usedFormatted} used, ${freeFormatted} free of ${totalFormatted}`;
+
+            let usedPct = (used / total) * 100;
+            let freePct = (free / total) * 100;
+
+            // Ensure visual minimum display if total > 0
+            if (used > 0 && usedPct < 0.5) usedPct = 0.5;
+            if (free > 0 && freePct < 0.5) freePct = 0.5;
+
+            barUsed.style.width = usedPct.toFixed(1) + "%";
+            barFree.style.width = freePct.toFixed(1) + "%";
+        }
+
+        function formatStorageBytes(bytes) {
+            if (bytes === 0 || isNaN(bytes)) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
         // Directory Listing
         async function refreshDirectory() {
             try {
+                updateStorageInfo();
                 const res = await apiFetch(`/api/files?path=${encodeURIComponent(currentPath)}`);
                 const files = await res.json();
                 

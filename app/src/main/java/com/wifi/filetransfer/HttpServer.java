@@ -41,6 +41,31 @@ public class HttpServer {
         return port;
     }
 
+    public static class StorageInfo {
+        public final long totalSpace;
+        public final long freeSpace;
+        public final long usedSpace;
+
+        public StorageInfo(long totalSpace, long freeSpace, long usedSpace) {
+            this.totalSpace = totalSpace;
+            this.freeSpace = freeSpace;
+            this.usedSpace = usedSpace;
+        }
+    }
+
+    public static StorageInfo getStorageInfo(File file) {
+        if (file == null) {
+            return new StorageInfo(0, 0, 0);
+        }
+        long total = file.getTotalSpace();
+        long free = file.getUsableSpace();
+        if (free == 0) {
+            free = file.getFreeSpace();
+        }
+        long used = total >= free ? (total - free) : 0;
+        return new StorageInfo(total, free, used);
+    }
+
     public static File resolveUploadFile(File destDir, String filename, boolean replace) {
         File target = new File(destDir, filename);
         if (replace || !target.exists()) {
@@ -277,6 +302,9 @@ public class HttpServer {
             } else if (uri.equals("/api/files")) {
                 String path = queryParams.get("path");
                 listDirectory(path, out);
+            } else if (uri.equals("/api/storage")) {
+                String path = queryParams.get("path");
+                getStorageInfoResponse(path, out);
             } else if (uri.equals("/api/download")) {
                 String path = queryParams.get("path");
                 downloadFile(path, out);
@@ -365,15 +393,40 @@ public class HttpServer {
                 if (count > 0) {
                     json.append(",");
                 }
+                File f = new File(entry.getKey());
+                StorageInfo storageInfo = getStorageInfo(f);
+
                 json.append("{");
                 json.append("\"name\":\"").append(escapeJson(entry.getValue())).append("\",");
-                json.append("\"path\":\"").append(escapeJson(entry.getKey())).append("\"");
+                json.append("\"path\":\"").append(escapeJson(entry.getKey())).append("\",");
+                json.append("\"total_space\":").append(storageInfo.totalSpace).append(",");
+                json.append("\"free_space\":").append(storageInfo.freeSpace).append(",");
+                json.append("\"used_space\":").append(storageInfo.usedSpace);
                 json.append("}");
                 count++;
             }
             json.append("]");
 
             sendJsonResponse(out, 200, json.toString());
+        }
+
+        private void getStorageInfoResponse(String path, OutputStream out) throws IOException {
+            File target = null;
+            if (path != null && !path.trim().isEmpty()) {
+                target = new File(path);
+            }
+            if (target == null || !target.exists()) {
+                target = Environment.getExternalStorageDirectory();
+            }
+
+            StorageInfo storageInfo = getStorageInfo(target);
+            String json = "{"
+                    + "\"total_space\":" + storageInfo.totalSpace + ","
+                    + "\"free_space\":" + storageInfo.freeSpace + ","
+                    + "\"used_space\":" + storageInfo.usedSpace
+                    + "}";
+
+            sendJsonResponse(out, 200, json);
         }
 
         private void listDirectory(String path, OutputStream out) throws IOException {
